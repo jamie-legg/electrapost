@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer base {
+  :root {
+    --destructive-foreground: 60 9% 98%;
+    --secondary-foreground: 24 10% 10%;
+    --popover-foreground: 20 14% 4%;
+    --primary-foreground: 26 83% 14%;
+    --accent-foreground: 24 10% 10%;
+    --muted-foreground: 25 0% 39%;
+    --card-foreground: 20 14% 4%;
+    --destructive: 0 55% 42%;
+    --background: 0 0% 100%;
+    --foreground: 20 14% 4%;
+    --secondary: 60 5% 96%;
+    --popover: 0 0% 100%;
+    --primary: 48 96% 53%;
+    --border: 20 6% 90%;
+    --accent: 60 5% 96%;
+    --muted: 60 5% 94%;
+    --input: 20 6% 57%;
+    --card: 0 0% 100%;
+    --ring: 20 14% 4%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 20 14.3% 4.1%;
+    --foreground: 60 9.1% 97.8%;
+    --card: 20 14.3% 4.1%;
+    --card-foreground: 60 9.1% 97.8%;
+    --popover: 20 14.3% 4.1%;
+    --popover-foreground: 60 9.1% 97.8%;
+    --primary: 47.9 95.8% 53.1%;
+    --primary-foreground: 26 83.3% 14.1%;
+    --secondary: 12 6.5% 15.1%;
+    --secondary-foreground: 60 9.1% 97.8%;
+    --muted: 12 6.5% 15.1%;
+    --muted-foreground: 24 5.4% 63.9%;
+    --accent: 12 6.5% 15.1%;
+    --accent-foreground: 60 9.1% 97.8%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 60 9.1% 97.8%;
+    --border: 12 6.5% 15.1%;
+    --input: 12 6.5% 15.1%;
+    --ring: 35.5 91.7% 32.9%;
+  }
+}
+
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+}
+
+input#file-upload-button {
+  color: white;
+  border-radius: 0.5rem;
+}
