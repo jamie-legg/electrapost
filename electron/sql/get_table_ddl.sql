@@ -15,12 +15,12 @@ WITH columns AS (
     LEFT JOIN 
         pg_catalog.pg_attrdef ad ON a.attrelid = ad.adrelid AND a.attnum = ad.adnum
     WHERE 
-        c.relname = $$table$$
+        c.relname = '$$TABLE$$'
         AND a.attnum > 0
         AND NOT a.attisdropped
 )
 SELECT 
-    'CREATE TABLE ' || $$table$$ || ' (' || 
+    'CREATE TABLE ' || '$$TABLE$$' || ' (' || 
     string_agg(column_name || ' ' || column_type || ' ' || default_value || ' ' || not_null, ', ') || ');'
 AS ddl
 FROM 

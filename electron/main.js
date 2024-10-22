@@ -1,5 +1,3 @@
-
-
 const { app, BrowserWindow, ipcMain, Menu, Tray } = require("electron");
 const { nativeTheme } = require("electron/main");
 const path = require("path");
@@ -17,22 +15,37 @@ let mainWindow;
 let db;
 
 function loadSQL(fileName, params = {}) {
-  let sql = fs.readFileSync(path.join(__dirname, `sql/${fileName}.sql`), 'utf8');
-
+  let sql = fs.readFileSync(
+    path.join(__dirname, `sql/${fileName}.sql`),
+    "utf8"
+  );
+  console.log("sql", sql);
   // Replace placeholders with actual parameters
   for (const [key, value] of Object.entries(params)) {
-    const placeholder = `$$${key.toUpperCase()}$$`;
-    sql = sql.replace(new RegExp(placeholder, 'g'), value);
+    const placeholder = `\\$\\$${key.toUpperCase()}\\$\\$`;
+
+    // count instances of the placeholder
+    const count = (sql.match(new RegExp(placeholder, "g")) || []).length;
+
+    if (count < 1) {
+      throw new Error(
+        `Placeholder ${placeholder} is not found in ${fileName}.sql`
+      );
+    }
+    sql = sql.replace(new RegExp(placeholder, "g"), value);
   }
 
   return sql;
 }
 
 async function useClientQuery(clientId, query) {
-  const connection = db.prepare(`SELECT * FROM dbConnections WHERE id = ?`).get(clientId);
+  const connection = db
+    .prepare(`SELECT * FROM dbConnections WHERE id = ?`)
+    .get(clientId);
   const client = new Client(connection);
   await client.connect();
   const results = await client.query(query);
+  console.log("results", results);
   await client.end();
   return {
     rows: results.rows,
@@ -80,7 +93,6 @@ function createWindow() {
 
       // save the connection to the database
       if (!test) {
-        console.log("Saving connection to database");
         db.prepare(
           `INSERT INTO dbConnections (nickname, host, port, database, user, password, connectSSH, startupQuery, preConnectScript, serverCA, clientCert, clientKey) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         ).run(
@@ -97,7 +109,6 @@ function createWindow() {
           config.clientCert || null,
           config.clientKey || null
         );
-        console.log("Connection saved to database");
       }
 
       return { success: true, message: "Database connection successful" };
@@ -111,20 +122,23 @@ function createWindow() {
   });
 
   ipcMain.handle("getTableNames", async (event, clientId) => {
-    if(!clientId) {
+    if (!clientId) {
       return [];
     }
-    const connection = db.prepare(`SELECT * FROM dbConnections WHERE id = ?`).get(clientId);
+    const connection = db
+      .prepare(`SELECT * FROM dbConnections WHERE id = ?`)
+      .get(clientId);
     delete connection.id;
     const client = new Client(connection);
     await client.connect();
-    const tableNames = await client.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public'");
+    const tableNames = await client.query(
+      "SELECT table_name FROM information_schema.tables WHERE table_schema='public'"
+    );
     return tableNames.rows.map((row) => row.table_name);
   });
 
   ipcMain.handle("getConnections", async (event) => {
     const connections = db.prepare(`SELECT * FROM dbConnections`).all();
-    console.log("Connections", connections);
     return connections;
   });
 
@@ -134,7 +148,8 @@ function createWindow() {
 
   ipcMain.handle("getTableDDL", async (event, clientId, tableName) => {
     const sql = loadSQL("get_table_ddl", { table: tableName });
-    return await useClientQuery(clientId, sql);
+    const result = await useClientQuery(clientId, sql);
+    return result.rows[0].ddl;
   });
 
   const iconPath = path.join(__dirname, "../public/logoTemplate.png");
@@ -176,8 +191,6 @@ const createTable = db
   )`
   )
   .run();
-
-console.log("createTable", createTable);
 
 app.on("ready", createWindow);
 
