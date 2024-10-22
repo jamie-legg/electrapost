@@ -5,11 +5,13 @@ import NewClientModal from "../NewClient/NewClientModal";
 import { useState, useEffect } from "react";
 import { Button } from "../Button";
 import { DatabaseClientConfig } from "global";
+import { useSession } from "@/hooks/use-session";
 
 export const CurrentClient = ({ activeClientId, onChangeClient }) => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [clients, setClients] = useState<DatabaseClientConfig[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const { setSessions } = useSession();
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -18,7 +20,14 @@ export const CurrentClient = ({ activeClientId, onChangeClient }) => {
       
       setClients(fetchedClients);
     };
+    const fetchActiveSessionId = async () => {
+      const sessions = await window.db.getSessions();
+      console.log('sessions', sessions);
+      
+      setSessions(sessions);
+    };
     fetchClients();
+    fetchActiveSessionId(); 
   }, []);
 
   const currentClient = clients.find(client => client.id === activeClientId);

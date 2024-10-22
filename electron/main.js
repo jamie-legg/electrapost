@@ -4,7 +4,7 @@ const path = require("path");
 const dotenv = require("dotenv");
 const sqlite3 = require("better-sqlite3");
 const { Client } = require("pg");
-const fs = require("fs");
+const { useClientQuery, getInitialSql, loadSQL } = require("./lib");
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 ipcMain.on("invokeEnv", (event) => {
@@ -14,49 +14,11 @@ ipcMain.on("invokeEnv", (event) => {
 let mainWindow;
 let db;
 
-function loadSQL(fileName, params = {}) {
-  let sql = fs.readFileSync(
-    path.join(__dirname, `sql/${fileName}.sql`),
-    "utf8"
-  );
-  console.log("sql", sql);
-  // Replace placeholders with actual parameters
-  for (const [key, value] of Object.entries(params)) {
-    const placeholder = `\\$\\$${key.toUpperCase()}\\$\\$`;
-
-    // count instances of the placeholder
-    const count = (sql.match(new RegExp(placeholder, "g")) || []).length;
-
-    if (count < 1) {
-      throw new Error(
-        `Placeholder ${placeholder} is not found in ${fileName}.sql`
-      );
-    }
-    sql = sql.replace(new RegExp(placeholder, "g"), value);
-  }
-
-  return sql;
-}
-
-async function useClientQuery(clientId, query) {
-  const connection = db
-    .prepare(`SELECT * FROM dbConnections WHERE id = ?`)
-    .get(clientId);
-  const client = new Client(connection);
-  await client.connect();
-  const results = await client.query(query);
-  console.log("results", results);
-  await client.end();
-  return {
-    rows: results.rows,
-    columns: results.fields.map((field) => field.name),
-  };
-}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1000,
+    height: 800,
     webPreferences: {
       nodeIntegration: true,
       preload: path.join(__dirname, "preload.js"),
@@ -143,12 +105,33 @@ function createWindow() {
   });
 
   ipcMain.handle("executeQuery", async (event, clientId, query) => {
-    return await useClientQuery(clientId, query);
+    // Add the query to the userQueries table
+    db.prepare(`INSERT INTO userQueries (clientId, query, timestamp) VALUES (?, ?, ?)`).run(
+      clientId,
+      query,
+      new Date().toISOString()
+    );
+    return await useClientQuery(clientId, query, db);
+  });
+
+  ipcMain.handle("getSessions", async (event) => {
+    const sessions = await db.prepare(`SELECT * FROM userSessions`).all();
+    if (sessions.length === 0) {
+      const clientId = await db.prepare(`SELECT id FROM dbConnections ORDER BY id DESC LIMIT 1`).get();
+      console.log('clientId', clientId);
+      await db.prepare(`INSERT INTO userSessions (name, clientId, active, query, queryResultsb64, tableDDL, isDDLViewOpen) VALUES ('New Session', ?, 1, '', '', '', 0)`).run(clientId.id);
+    }
+    return sessions;
+  });
+
+  ipcMain.handle("setActiveSession", async (event, sessionId) => {
+   const sql = loadSQL("set_active_session", { sessionId });
+   await db.prepare(sql).run();
   });
 
   ipcMain.handle("getTableDDL", async (event, clientId, tableName) => {
     const sql = loadSQL("get_table_ddl", { table: tableName });
-    const result = await useClientQuery(clientId, sql);
+    const result = await useClientQuery(clientId, sql, db);
     return result.rows[0].ddl;
   });
 
@@ -172,25 +155,11 @@ function createWindow() {
 
 // Initialize SQLite DB
 db = new sqlite3(path.join(app.getPath("userData"), "database.db"));
-const createTable = db
-  .prepare(
-    `CREATE TABLE IF NOT EXISTS dbConnections (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nickname TEXT,
-    host TEXT,
-    port INTEGER,
-    database TEXT,
-    user TEXT,
-    password TEXT,
-    connectSSH BOOLEAN,
-    startupQuery BOOLEAN,
-    preConnectScript BOOLEAN,
-    serverCA BLOB,
-    clientCert BLOB,
-    clientKey BLOB
-  )`
-  )
-  .run();
+// initial migrations
+const initialSql = getInitialSql();
+for (const sql of initialSql) {
+  db.prepare(loadSQL(sql)).run();
+}
 
 app.on("ready", createWindow);
 

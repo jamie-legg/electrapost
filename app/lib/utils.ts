@@ -84,3 +84,8 @@ export function countWeekdays(startDate: Date, endDate: Date) {
   //   };
   // }
   // }
+
+export const getInitialSessions = async () => {
+  const sessions = await window.db.getSessions();
+  return sessions;
+}

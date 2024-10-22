@@ -1,4 +1,5 @@
 // hooks/useSession.ts
+import { QueryInfo, Session } from 'global';
 import React, { useState, createContext, useContext, useEffect } from 'react';
 
 // Define the shape of your session context
@@ -10,10 +11,13 @@ interface SessionContextProps {
   queryText: string;
   queryResults: {
     rows: any[],
-    columns: string[]
+    columns: string[],
+    info: QueryInfo,
+    history: string[]
   };
   tableDDL: string | null;
   isDDLViewOpen: boolean;
+  setSessions: (sessions: Session[]) => void;
   createNewSession: () => void;
   changeClient: (clientId: number) => void;
   setActiveSessionId: (id: number) => void;
@@ -28,14 +32,17 @@ const SessionContext = createContext<SessionContextProps | null>(null);
 
 // Create the provider component
 export function SessionProvider({ children }) {
-  const [sessions, setSessions] = useState([{ id: 1, name: 'Default Session' }]);
-  const [activeSessionId, setActiveSessionId] = useState(1);
+  const [sessions, setSessions] = useState([{ id: 1, name: 'Disconnected' }]);
+  const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
+
+
   const [activeClientId, setActiveClientId] = useState<number | null>(null);
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [queryText, setQueryText] = useState('');
-  const [queryResults, setQueryResults] = useState<{rows: any[], columns: string[]}>({rows: [], columns: []});
+  const [queryResults, setQueryResults] = useState<{rows: any[], columns: string[], info: QueryInfo, history: string[]}>({rows: [], columns: [], info: {duration: 0, rowCount: 0, status: '', complexity: 0}, history: []});
   const [tableDDL, setTableDDL] = useState<string | null>(null);
   const [isDDLViewOpen, setIsDDLViewOpen] = useState(false);
+
 
   const createNewSession = () => {
     const newSession = {
@@ -46,7 +53,7 @@ export function SessionProvider({ children }) {
     setActiveSessionId(newSession.id);
     setSelectedTable(null);
     setQueryText('');
-    setQueryResults({rows: [], columns: []});
+    setQueryResults({rows: [], columns: [], info: {duration: 0, rowCount: 0, status: '', complexity: 0}, history: []});
   };
 
   useEffect(() => {
@@ -60,8 +67,9 @@ export function SessionProvider({ children }) {
   }, [selectedTable]);
 
   const changeClient = (clientId: number) => {
+    const activeSession = sessions.find(session => session.id === activeSessionId);
+    setSessions([...sessions.filter(session => session.id !== activeSessionId), { ...activeSession, name: "New Session" }]);
     setActiveClientId(clientId);
-    createNewSession();
   };
 
   const getTableDDL = async () => {
@@ -73,14 +81,14 @@ export function SessionProvider({ children }) {
   const executeQuery = async (queryOverride?: string) => {
     console.log('executeQuery', queryText, activeClientId);
     if (!activeClientId) return;
-    const {rows, columns} = await window.db.executeQuery(activeClientId, queryOverride || queryText);
-    setQueryResults({rows, columns});
+    setQueryResults(await window.db.executeQuery(activeClientId, queryOverride || queryText));
   };
 
   return (
     <SessionContext.Provider
       value={{
         sessions,
+        setSessions,
         activeSessionId,
         activeClientId,
         selectedTable,
@@ -94,7 +102,7 @@ export function SessionProvider({ children }) {
         executeQuery,
         tableDDL,
         isDDLViewOpen,
-        setIsDDLViewOpen
+        setIsDDLViewOpen,
       }}
     >
       {children}

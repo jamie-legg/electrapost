@@ -19,12 +19,9 @@ export default function Page() {
 
 function AppContent() {
   const {
-    sessions,
-    activeSessionId,
     activeClientId,
     createNewSession,
     changeClient,
-    setActiveSessionId,
   } = useSession();
 
   return (

@@ -38,14 +38,14 @@ export function DataTable<TData, TValue>({
   return (
     <div className="rounded-md h-[calc(100vh-12rem)] w-[calc(100vw-18rem)] overflow-hidden">
       <div className="overflow-x-auto overflow-y-auto h-full w-full">
-        <Table className="min-w-full table-auto bg-gradient-to-b from-stone-950 to-stone-900 text-stone-400">
+        <Table className="min-w-full table-auto bg-gradient-to-b from-stone-950 to-stone-900 text-stone-400 mt-4 border-stone-600">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className="sticky top-0 bg-stone-950 z-10 border-b"
+                    className="sticky top-0 bg-stone-950 z-10"
                   >
                     {header.isPlaceholder
                       ? null
@@ -58,7 +58,7 @@ export function DataTable<TData, TValue>({
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody className="mt-4">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
