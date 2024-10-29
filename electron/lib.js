@@ -60,6 +60,8 @@ async function useClientQuery(clientId, query, db) {
   const startTime = Date.now(); // Start time
   let results, status;
 
+  console.log("useClientQuery", query);
+  console.log("client", client);
   try {
     results = await client.query(query);
     status = "success"; // Query was successful

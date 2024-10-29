@@ -7,11 +7,14 @@ contextBridge.exposeInMainWorld('db', {
   newClient: (config, test = false) => ipcRenderer.invoke('newClient', config, test),
   getConnections: () => ipcRenderer.invoke('getConnections'),
   getSessions: () => ipcRenderer.invoke('getSessions'),
+  getConnection: (clientId) => ipcRenderer.invoke('getConnection', clientId),
   getTableNames: (clientId) => ipcRenderer.invoke('getTableNames', clientId),
   previewTable: (clientId, tableName) => ipcRenderer.invoke('previewTable', clientId, tableName),
   executeQuery: (clientId, query) => ipcRenderer.invoke('executeQuery', clientId, query),
   getTableDDL: (clientId, tableName) => ipcRenderer.invoke('getTableDDL', clientId, tableName),
-  setActiveSession: (sessionId) => ipcRenderer.invoke('setActiveSession', sessionId)
+  setActiveSession: (sessionId) => ipcRenderer.invoke('setActiveSession', sessionId),
+  testDatabase: (clientId) => ipcRenderer.invoke('testDatabase', clientId)
+  
 });
 
 

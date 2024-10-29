@@ -12,8 +12,12 @@ import {
   TableHeader,
   TableRow,
 } from "./ui/table";
+import { useDisplay } from "@/hooks/use-display";
+import { useEffect, useState } from "react";
+import { Transition } from "@headlessui/react";
 
 export const columnGenerator = (columnNames: string[]) => {
+  if (!columnNames) return [];
   return columnNames.map(columnName => ({
     accessorKey: columnName,
     header: columnName,
@@ -29,18 +33,35 @@ export function DataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
+  const { isFullscreen, fullscreenView } = useDisplay();
+  const [isNativeFullscreen, setIsNativeFullscreen] = useState(false);
+
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
 
+  useEffect(() => {
+    if (isFullscreen && fullscreenView === 'query') {
+     
+    }
+  }, [isFullscreen, fullscreenView, isNativeFullscreen]);
+
   return (
-    <div className="rounded-md h-[calc(100vh-12rem)] w-[calc(100vw-18rem)] overflow-hidden">
-      <div className="overflow-x-auto overflow-y-auto h-full w-full">
-        <Table className="min-w-full table-auto bg-gradient-to-b from-stone-950 to-stone-900 text-stone-400 mt-4 border-stone-600">
+    <Transition
+      show={true}
+      enter="transition-opacity duration-300"
+      enterFrom="opacity-0"
+      enterTo="opacity-100"
+      leave="transition-opacity duration-300"
+      leaveFrom="opacity-100"
+      leaveTo="opacity-0"
+    >
+      <div className="rounded-md w-full overflow-y-auto">
+        <Table className="size-full relative overflow-auto table-auto bg-gradient-to-b from-stone-950 to-stone-900 text-stone-400 border-stone-600">
           <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
+            {columns.length > 0 && table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead
@@ -58,8 +79,8 @@ export function DataTable<TData, TValue>({
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody className="mt-4">
-            {table.getRowModel().rows?.length ? (
+          <TableBody>
+            {columns.length > 0 && table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   className="hover:bg-black"
@@ -68,7 +89,6 @@ export function DataTable<TData, TValue>({
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell className="hover:bg-stone-950" key={cell.id}>
-              
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -84,6 +104,6 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-    </div>
+    </Transition>
   );
 }

@@ -34,7 +34,7 @@ export const Sidebar = ({ activeClientId }) => {
     }, [tables, debouncedSearchTerm]);
 
   return (
-    <div className="flex-col bg-gradient-to-b from-black text-xs to-stone-900 text-stone-400 m-1 border border-stone-500 rounded-lg w-72 items-center justify-center overflow-y-auto pl-2 pr-8">
+    <div className="h-full flex-col bg-gradient-to-b from-black text-xs to-stone-900 text-stone-400 m-1 border border-stone-500 rounded-lg items-center justify-center overflow-y-auto pl-2 pr-8">
       <SearchTable searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
       {filteredTables.map((table) => (
         <div 

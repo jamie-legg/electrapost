@@ -14,6 +14,8 @@ ipcMain.on("invokeEnv", (event) => {
 let mainWindow;
 let db;
 
+const server = require('./server');
+
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -97,6 +99,11 @@ function createWindow() {
       "SELECT table_name FROM information_schema.tables WHERE table_schema='public'"
     );
     return tableNames.rows.map((row) => row.table_name);
+  });
+
+  ipcMain.handle("getConnection", async (event, clientId) => {
+    const connection = db.prepare(`SELECT * FROM dbConnections WHERE id = ?`).get(clientId);
+    return connection
   });
 
   ipcMain.handle("getConnections", async (event) => {

@@ -4,6 +4,7 @@ export interface DatabaseAPI {
   getConnections: () => Promise<DatabaseClientConfig[]>
   getSessions: () => Promise<Session[]>
   getTableNames: (clientId: number) => Promise<string[]>
+  getConnection: (clientId: number) => Promise<DatabaseClientConfig>
   previewTable: (clientId: number, tableName: string) => Promise<any[]>
   executeQuery: (clientId: number, query: string) => Promise<{rows: any[], columns: string[], info: QueryInfo, history: string[]}>
   getTableDDL: (clientId: number, tableName: string) => Promise<string>
